@@ -40,7 +40,7 @@ export const OperatorCard: React.FC<OperatorCardProps> = ({ operator, onStake, o
     !!userPosition &&
     (userPosition.positionValue > 0 ||
       userPosition.storageFeeDeposit > 0 ||
-      userPosition.pendingDeposit);
+      (userPosition.pendingDeposit?.amount || 0) > 0);
 
   return (
     <Card

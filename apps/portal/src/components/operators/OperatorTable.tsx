@@ -141,7 +141,9 @@ export const OperatorTable: React.FC<OperatorTableProps> = ({
     for (const position of positions) {
       const hasUserPosition =
         !!position &&
-        (position.positionValue > 0 || position.storageFeeDeposit > 0 || position.pendingDeposit);
+        (position.positionValue > 0 ||
+          position.storageFeeDeposit > 0 ||
+          (position.pendingDeposit?.amount || 0) > 0);
       if (hasUserPosition) {
         ids.add(position.operatorId);
       }
