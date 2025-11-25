@@ -16,9 +16,12 @@ import {
 } from '@/lib/withdrawal-utils';
 import { multiplySharesBySharePrice } from '@/lib/fixed-point';
 
+type TransactionFilter = 'all' | 'deposits' | 'withdrawals';
+
 interface UseOperatorTransactionsOptions {
   pageSize?: number;
   refreshInterval?: number; // ms
+  filter?: TransactionFilter;
 }
 
 interface UseOperatorTransactionsReturn {
@@ -39,7 +42,7 @@ export const useOperatorTransactions = (
   operatorId: string,
   options: UseOperatorTransactionsOptions = {},
 ): UseOperatorTransactionsReturn => {
-  const { pageSize = 25, refreshInterval } = options;
+  const { pageSize = 10, refreshInterval, filter = 'all' } = options;
   const { isConnected, selectedAccount } = useWallet();
 
   const [page, setPage] = useState(0);
@@ -62,19 +65,27 @@ export const useOperatorTransactions = (
       setLoading(true);
       setError(null);
       try {
+        // Fetch only what's needed based on filter
+        const shouldFetchDeposits = filter === 'all' || filter === 'deposits';
+        const shouldFetchWithdrawals = filter === 'all' || filter === 'withdrawals';
+
         const [dep, wit] = await Promise.all([
-          indexerService.getDepositsByOperator({
-            address: selectedAccount.address,
-            operatorId,
-            limit: pageSize,
-            offset: pageToFetch * pageSize,
-          }),
-          indexerService.getWithdrawalsByOperator({
-            address: selectedAccount.address,
-            operatorId,
-            limit: pageSize,
-            offset: pageToFetch * pageSize,
-          }),
+          shouldFetchDeposits
+            ? indexerService.getDepositsByOperator({
+                address: selectedAccount.address,
+                operatorId,
+                limit: pageSize,
+                offset: pageToFetch * pageSize,
+              })
+            : Promise.resolve({ rows: [], totalCount: 0 }),
+          shouldFetchWithdrawals
+            ? indexerService.getWithdrawalsByOperator({
+                address: selectedAccount.address,
+                operatorId,
+                limit: pageSize,
+                offset: pageToFetch * pageSize,
+              })
+            : Promise.resolve({ rows: [], totalCount: 0 }),
         ]);
 
         // Determine domain id (prefer deposits, fallback to withdrawals)
@@ -159,7 +170,7 @@ export const useOperatorTransactions = (
         setLoading(false);
       }
     },
-    [isConnected, selectedAccount, operatorId, pageSize],
+    [isConnected, selectedAccount, operatorId, pageSize, filter],
   );
 
   const goToPage = useCallback(

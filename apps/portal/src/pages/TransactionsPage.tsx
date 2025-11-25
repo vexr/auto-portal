@@ -339,7 +339,7 @@ export const TransactionsPage: React.FC = () => {
     goToPage,
     depositsCount,
     withdrawalsCount,
-  } = useOperatorTransactions(operatorId, { pageSize });
+  } = useOperatorTransactions(operatorId, { pageSize, filter });
 
   const handleExportCSV = React.useCallback(async () => {
     if (!selectedAccount || exporting) return;
@@ -456,15 +456,8 @@ export const TransactionsPage: React.FC = () => {
       txs = [syntheticDeposit, ...transactions];
     }
 
-    // Apply filter
-    if (filter === 'deposits') {
-      return txs.filter(t => t.type === 'deposit');
-    }
-    if (filter === 'withdrawals') {
-      return txs.filter(t => t.type === 'withdrawal');
-    }
     return txs;
-  }, [transactions, position, operatorId, deposits, withdrawals, filter]);
+  }, [transactions, position, operatorId, deposits, withdrawals]);
 
   if (!operatorId) {
     return (
@@ -522,14 +515,11 @@ export const TransactionsPage: React.FC = () => {
           <Text as="h3" variant="h3">
             Transactions
           </Text>
-          <div className="flex items-center gap-2">
-            <Text variant="bodySmall" className="text-muted-foreground">
-              Deposits: {depositsCount}
-            </Text>
-            <Text variant="bodySmall" className="text-muted-foreground">
-              Withdrawals: {withdrawalsCount}
-            </Text>
-          </div>
+          <Text variant="bodySmall" className="text-muted-foreground">
+            {filter === 'all' && `Deposits: ${depositsCount} | Withdrawals: ${withdrawalsCount}`}
+            {filter === 'deposits' && `Deposits: ${depositsCount}`}
+            {filter === 'withdrawals' && `Withdrawals: ${withdrawalsCount}`}
+          </Text>
         </div>
         {/* Filter Tabs */}
         <div className="flex items-center justify-between border-b border-border pb-2">
@@ -537,10 +527,7 @@ export const TransactionsPage: React.FC = () => {
             {(['all', 'deposits', 'withdrawals'] as const).map(tab => (
               <button
                 key={tab}
-                onClick={() => {
-                  setFilter(tab);
-                  if (page !== 0) goToPage(0);
-                }}
+                onClick={() => setFilter(tab)}
                 className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                   filter === tab
                     ? 'border-primary text-primary'
@@ -555,7 +542,7 @@ export const TransactionsPage: React.FC = () => {
             variant="secondary"
             size="sm"
             onClick={handleExportCSV}
-            disabled={exporting || loading || depositsCount + withdrawalsCount === 0}
+            disabled={exporting || loading || transactionsToRender.length === 0}
           >
             {exporting ? <SpinnerIcon className="mr-1" /> : <DownloadIcon className="mr-1" />}
             Export Transactions
