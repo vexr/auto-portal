@@ -6,13 +6,14 @@ import { useOperatorPosition, usePositions } from '@/hooks/use-positions';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
-import { formatAI3, formatTimeAgo } from '@/lib/formatting';
+import { formatAI3, formatNumber, formatTimeAgo } from '@/lib/formatting';
 import { Badge } from '@/components/ui/badge';
 import { getSemanticColors, getTransactionStatusColors } from '@/lib/design-tokens';
 import { shannonsToAi3, ai3ToShannons } from '@autonomys/auto-utils';
 import type { OperatorTransaction } from '@/types/transactions';
 import { STORAGE_FUND_PERCENTAGE } from '@/constants/staking';
 import { config } from '@/config';
+import { getOperatorAvatar } from '@/config/operator-avatars';
 import { indexerService } from '@/services/indexer-service';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
@@ -172,6 +173,37 @@ const ExternalLinkIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+// Operator avatar component - uses custom image if available, otherwise shows initial
+const OperatorAvatar: React.FC<{
+  operatorId: string;
+  name: string;
+  size?: 'sm' | 'md';
+}> = ({ operatorId, name, size = 'md' }) => {
+  const customAvatar = getOperatorAvatar(operatorId);
+  const sizeClasses = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
+  const textClasses = size === 'sm' ? 'text-sm' : '';
+
+  if (customAvatar) {
+    return (
+      <img
+        src={customAvatar}
+        alt={name}
+        className={`${sizeClasses} rounded-full object-cover flex-shrink-0`}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`${sizeClasses} bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0`}
+    >
+      <span className={`text-white font-semibold ${textClasses}`}>
+        {name.charAt(0).toUpperCase()}
+      </span>
+    </div>
+  );
+};
+
 interface OperatorSelectorProps {
   currentOperatorId: string;
   currentOperatorName?: string;
@@ -199,17 +231,13 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getOperatorInitial = (name: string) => name.charAt(0).toUpperCase();
-
   const displayName = currentOperatorName || `Operator ${currentOperatorId}`;
 
   if (operators.length <= 1) {
     // No dropdown needed if only one operator
     return (
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-white font-semibold">{getOperatorInitial(displayName)}</span>
-        </div>
+        <OperatorAvatar operatorId={currentOperatorId} name={displayName} />
         <Text as="h2" variant="h2">
           {displayName}
         </Text>
@@ -223,9 +251,7 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-2 py-1 -ml-2 transition-colors"
       >
-        <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-white font-semibold">{getOperatorInitial(displayName)}</span>
-        </div>
+        <OperatorAvatar operatorId={currentOperatorId} name={displayName} />
         <Text as="h2" variant="h2">
           {displayName}
         </Text>
@@ -250,9 +276,7 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
                   isSelected ? 'bg-muted' : 'hover:bg-muted/50'
                 }`}
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-medium text-sm">{getOperatorInitial(name)}</span>
-                </div>
+                <OperatorAvatar operatorId={op.operatorId} name={name} size="sm" />
                 <span className="flex-1 font-medium truncate">{name}</span>
                 <span className="text-xs text-muted-foreground font-mono">
                   {formatAI3(op.positionValue, 2)}
@@ -624,7 +648,7 @@ export const OperatorDetailPage: React.FC = () => {
                             rel="noopener noreferrer"
                             className="text-primary hover:underline inline-flex items-center gap-1 font-mono"
                           >
-                            {tx.blockHeight}
+                            {formatNumber(Number(tx.blockHeight))}
                             <ExternalLinkIcon className="opacity-50" />
                           </a>
                         ) : (
