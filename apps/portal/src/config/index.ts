@@ -33,6 +33,14 @@ export const config = {
   explorer: {
     extrinsicBaseUrl:
       import.meta.env.VITE_EXPLORER_EXTRINSIC_BASE_URL || 'https://autonomys.subscan.io/extrinsic/',
+    getBlockUrl: (blockHeight: string | number) => {
+      const networkId = resolveNetworkId();
+      const baseUrl =
+        networkId === 'mainnet'
+          ? 'https://autonomys.subscan.io'
+          : 'https://autonomys-chronos.subscan.io';
+      return `${baseUrl}/block/${blockHeight}`;
+    },
   },
 
   // Add other configuration as needed
