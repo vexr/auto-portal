@@ -75,14 +75,14 @@ export const OperatorFilters: React.FC<OperatorFiltersProps> = ({ loading = fals
             transition-colors duration-200 ease-in-out
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
             disabled:cursor-not-allowed disabled:opacity-50
-            ${filters.myStakesOnly ? 'bg-primary' : 'bg-muted'}
+            ${filters.myStakesOnly ? 'bg-primary' : 'bg-input'}
           `}
         >
           <span
             className={`
-              pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm
+              pointer-events-none inline-block h-4 w-4 transform rounded-full shadow-sm
               transition-transform duration-200 ease-in-out
-              ${filters.myStakesOnly ? 'translate-x-[18px]' : 'translate-x-[2px]'}
+              ${filters.myStakesOnly ? 'translate-x-[18px] bg-primary-foreground' : 'translate-x-[2px] bg-foreground'}
             `}
           />
         </button>

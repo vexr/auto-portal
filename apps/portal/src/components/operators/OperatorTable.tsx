@@ -468,7 +468,7 @@ export const OperatorTable: React.FC<OperatorTableProps> = ({
   }
 
   return (
-    <div className="border border-border rounded-xl">
+    <div className="border border-border rounded-xl overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full table-fixed min-w-[1000px]">
           {renderTableHeader()}
