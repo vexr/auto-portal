@@ -26,7 +26,7 @@ export const router = createBrowserRouter([
         element: <OperatorsPage />,
       },
       {
-        path: 'operators/:operatorId',
+        path: 'transactions/:operatorId',
         element: <OperatorDetailPage />,
       },
       {

@@ -175,7 +175,7 @@ const ExternalLinkIcon: React.FC<{ className?: string }> = ({ className }) => (
 interface OperatorSelectorProps {
   currentOperatorId: string;
   currentOperatorName?: string;
-  operators: Array<{ operatorId: string; operatorName: string }>;
+  operators: Array<{ operatorId: string; operatorName: string; positionValue: number }>;
   onSelect: (operatorId: string) => void;
 }
 
@@ -233,7 +233,7 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 min-w-[280px] bg-background border border-border rounded-lg shadow-lg z-50 py-1">
+        <div className="absolute top-full left-0 mt-1 min-w-[320px] bg-background border border-border rounded-lg shadow-lg z-50 py-1">
           {operators.map(op => {
             const isSelected = op.operatorId === currentOperatorId;
             const name = op.operatorName || `Operator ${op.operatorId}`;
@@ -253,8 +253,11 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
                 <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-medium text-sm">{getOperatorInitial(name)}</span>
                 </div>
-                <span className="flex-1 font-medium">{name}</span>
-                {isSelected && <CheckIcon className="text-primary" />}
+                <span className="flex-1 font-medium truncate">{name}</span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  {formatAI3(op.positionValue, 2)}
+                </span>
+                {isSelected && <CheckIcon className="text-primary flex-shrink-0" />}
               </button>
             );
           })}
@@ -301,17 +304,22 @@ export const OperatorDetailPage: React.FC = () => {
   const currentOperator = positions.find(p => p.operatorId === operatorId);
   const currentOperatorName = currentOperator?.operatorName;
 
-  // Filter to only operators with positions (staked)
+  // Filter to only operators with positions (staked), sorted by stake descending
   const stakedOperators = React.useMemo(
     () =>
       positions
         .filter(p => p.positionValue > 0 || p.storageFeeDeposit > 0 || p.pendingDeposit)
-        .map(p => ({ operatorId: p.operatorId, operatorName: p.operatorName })),
+        .map(p => ({
+          operatorId: p.operatorId,
+          operatorName: p.operatorName,
+          positionValue: p.positionValue,
+        }))
+        .sort((a, b) => b.positionValue - a.positionValue),
     [positions],
   );
 
   const handleOperatorSelect = (newOperatorId: string) => {
-    navigate(`/operators/${newOperatorId}`);
+    navigate(`/transactions/${newOperatorId}`);
   };
 
   const {
@@ -362,9 +370,9 @@ export const OperatorDetailPage: React.FC = () => {
         withdrawalOffset += EXPORT_BATCH_SIZE;
       }
 
-      // Build CSV
+      // Build CSV (matches table column order)
       const csvRows: string[] = [];
-      csvRows.push('Type,Amount (AI3),Storage Fee (AI3),Status,Timestamp,Block');
+      csvRows.push('Type,Staked Amount (AI3),Storage Fee (AI3),Timestamp,Block,Status');
 
       for (const dep of allDeposits) {
         const amount = formatAI3(shannonsToAi3(dep.pending_amount ?? '0'));
@@ -372,7 +380,7 @@ export const OperatorDetailPage: React.FC = () => {
         const status = dep.pending_effective_domain_epoch ? 'pending' : 'complete';
         const timestamp = new Date(dep.timestamp).toISOString();
         csvRows.push(
-          `Deposit,"${amount}","${storageFee}",${status},${timestamp},${dep.block_height}`,
+          `Deposit,"${amount}","${storageFee}",${timestamp},${dep.block_height},${status}`,
         );
       }
 
@@ -382,7 +390,7 @@ export const OperatorDetailPage: React.FC = () => {
         const status = wit.withdrawal_in_shares_unlock_block ? 'pending' : 'complete';
         const timestamp = new Date(wit.timestamp).toISOString();
         csvRows.push(
-          `Withdrawal,"${amount}","${storageFee}",${status},${timestamp},${wit.block_height}`,
+          `Withdrawal,"${amount}","${storageFee}",${timestamp},${wit.block_height},${status}`,
         );
       }
 
@@ -660,7 +668,13 @@ export const OperatorDetailPage: React.FC = () => {
               {/* Info row */}
               <div className="flex items-center justify-between">
                 <Text variant="bodySmall" className="text-muted-foreground">
-                  Showing {startItem}-{endItem} of {totalCount} transactions
+                  {totalCount === 0
+                    ? 'No transactions'
+                    : totalCount === 1
+                      ? 'Showing 1 transaction'
+                      : startItem === 1 && endItem === totalCount
+                        ? `Showing ${totalCount} transactions`
+                        : `Showing ${startItem}-${endItem} of ${totalCount} transactions`}
                 </Text>
                 <div className="flex items-center gap-2">
                   <Text variant="bodySmall" className="text-muted-foreground">

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { features } from '@/features';
 import { WalletButton, WalletModal } from '@/components/wallet';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Menu, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useThemeStore } from '@auto-portal/shared-state';
+import { usePositions } from '@/hooks/use-positions';
 
 interface HeaderProps {
   className?: string;
@@ -19,6 +20,23 @@ export const Header: React.FC<HeaderProps> = ({ className = '' }) => {
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isDarkMode = useThemeStore(s => s.isDarkMode);
+  const location = useLocation();
+  const { positions } = usePositions({ refreshInterval: 0 });
+
+  // Get highest staked operator for default transactions link
+  const highestStakedOperatorId = useMemo(() => {
+    const stakedPositions = positions.filter(
+      p => p.positionValue > 0 || p.storageFeeDeposit > 0 || p.pendingDeposit,
+    );
+    if (stakedPositions.length === 0) return null;
+    const sorted = [...stakedPositions].sort((a, b) => b.positionValue - a.positionValue);
+    return sorted[0].operatorId;
+  }, [positions]);
+
+  const transactionsPath = highestStakedOperatorId
+    ? `/transactions/${highestStakedOperatorId}`
+    : null;
+  const isTransactionsActive = location.pathname.startsWith('/transactions');
 
   return (
     <header className={`bg-background border-b border-border ${className}`}>
@@ -65,6 +83,18 @@ export const Header: React.FC<HeaderProps> = ({ className = '' }) => {
                 {f.navLabel}
               </NavLink>
             ))}
+            {transactionsPath && (
+              <NavLink
+                to={transactionsPath}
+                className={`px-3 py-2 text-label transition-colors ${
+                  isTransactionsActive
+                    ? 'text-foreground border-b-2 border-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Transactions
+              </NavLink>
+            )}
           </nav>
 
           {/* Wallet Connection, Theme, and Network Badge */}
@@ -133,6 +163,19 @@ export const Header: React.FC<HeaderProps> = ({ className = '' }) => {
                   {f.navLabel}
                 </NavLink>
               ))}
+              {transactionsPath && (
+                <NavLink
+                  to={transactionsPath}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-label ${
+                    isTransactionsActive
+                      ? 'text-foreground bg-muted'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  Transactions
+                </NavLink>
+              )}
               <div className="pt-3 flex items-center justify-between">
                 {(() => {
                   const netId = config.network.defaultNetworkId;
