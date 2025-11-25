@@ -33,13 +33,14 @@ export const config = {
   explorer: {
     extrinsicBaseUrl:
       import.meta.env.VITE_EXPLORER_EXTRINSIC_BASE_URL || 'https://autonomys.subscan.io/extrinsic/',
-    getBlockUrl: (blockHeight: string | number) => {
+    getBlockUrl: (blockHeight: string | number): string | null => {
       const networkId = resolveNetworkId();
-      const baseUrl =
-        networkId === 'mainnet'
-          ? 'https://autonomys.subscan.io'
-          : 'https://autonomys-chronos.subscan.io';
-      return `${baseUrl}/block/${blockHeight}`;
+      const templates: Record<string, string> = {
+        mainnet: 'https://autonomys.subscan.io/block/{block}',
+        chronos: 'https://autonomys-chronos.subscan.io/block/{block}',
+      };
+      const template = templates[networkId];
+      return template ? template.replace('{block}', String(blockHeight)) : null;
     },
   },
 

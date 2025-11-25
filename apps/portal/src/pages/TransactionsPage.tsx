@@ -611,19 +611,25 @@ export const TransactionsPage: React.FC = () => {
                         {formatTimeAgo(date.getTime())}
                       </td>
                       <td className="py-2 pr-4 text-right">
-                        {tx.blockHeight ? (
-                          <a
-                            href={config.explorer.getBlockUrl(tx.blockHeight)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline inline-flex items-center gap-1 font-mono"
-                          >
-                            {formatNumber(Number(tx.blockHeight))}
-                            <ExternalLinkIcon className="opacity-50" />
-                          </a>
-                        ) : (
-                          '-'
-                        )}
+                        {(() => {
+                          if (!tx.blockHeight) return '-';
+                          const blockUrl = config.explorer.getBlockUrl(tx.blockHeight);
+                          const formattedBlock = formatNumber(Number(tx.blockHeight));
+                          if (!blockUrl) {
+                            return <span className="font-mono">{formattedBlock}</span>;
+                          }
+                          return (
+                            <a
+                              href={blockUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline inline-flex items-center gap-1 font-mono"
+                            >
+                              {formattedBlock}
+                              <ExternalLinkIcon className="opacity-50" />
+                            </a>
+                          );
+                        })()}
                       </td>
                       <td className="py-2 pr-4 text-right">
                         <Badge variant="outline" className={statusClasses.badge}>
