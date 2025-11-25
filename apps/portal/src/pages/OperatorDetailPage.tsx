@@ -211,7 +211,7 @@ export const OperatorDetailPage: React.FC = () => {
           </Text>
           <Button
             onClick={() => setPage(page + 1)}
-            disabled={loading || (deposits.length === 0 && withdrawals.length === 0)}
+            disabled={loading || (page + 1) * 25 >= depositsCount + withdrawalsCount}
           >
             Next
           </Button>
