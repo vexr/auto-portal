@@ -314,7 +314,7 @@ const SkeletonRow: React.FC = () => (
   </tr>
 );
 
-export const OperatorDetailPage: React.FC = () => {
+export const TransactionsPage: React.FC = () => {
   const { operatorId = '' } = useParams();
   const navigate = useNavigate();
   const { isConnected, selectedAccount } = useWallet();

@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Layout } from './components/layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { OperatorsPage } from './pages/OperatorsPage';
-import { OperatorDetailPage } from './pages/OperatorDetailPage';
+import { TransactionsPage } from './pages/TransactionsPage';
 import { StakingPage } from './pages/StakingPage';
 import { WithdrawalPage } from './pages/WithdrawalPage';
 import { features } from './features';
@@ -27,7 +27,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'transactions/:operatorId',
-        element: <OperatorDetailPage />,
+        element: <TransactionsPage />,
       },
       {
         path: 'staking/:operatorId',
