@@ -139,22 +139,6 @@ const ChevronDown: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const CheckIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
-
 const ExternalLinkIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg
     className={className}
@@ -207,7 +191,7 @@ const OperatorAvatar: React.FC<{
 interface OperatorSelectorProps {
   currentOperatorId: string;
   currentOperatorName?: string;
-  operators: Array<{ operatorId: string; operatorName: string; positionValue: number }>;
+  operators: Array<{ operatorId: string; operatorName: string; totalValue: number }>;
   onSelect: (operatorId: string) => void;
 }
 
@@ -279,9 +263,8 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
                 <OperatorAvatar operatorId={op.operatorId} name={name} size="sm" />
                 <span className="flex-1 font-medium truncate">{name}</span>
                 <span className="text-xs text-muted-foreground font-mono">
-                  {formatAI3(op.positionValue, 2)}
+                  {formatAI3(op.totalValue, 2)}
                 </span>
-                {isSelected && <CheckIcon className="text-primary flex-shrink-0" />}
               </button>
             );
           })}
@@ -328,7 +311,7 @@ export const TransactionsPage: React.FC = () => {
   const currentOperator = positions.find(p => p.operatorId === operatorId);
   const currentOperatorName = currentOperator?.operatorName;
 
-  // Filter to only operators with positions (staked), sorted by stake descending
+  // Filter to only operators with positions, sorted by total value descending
   const stakedOperators = React.useMemo(
     () =>
       positions
@@ -336,9 +319,9 @@ export const TransactionsPage: React.FC = () => {
         .map(p => ({
           operatorId: p.operatorId,
           operatorName: p.operatorName,
-          positionValue: p.positionValue,
+          totalValue: p.positionValue + p.storageFeeDeposit + (p.pendingDeposit?.amount || 0),
         }))
-        .sort((a, b) => b.positionValue - a.positionValue),
+        .sort((a, b) => b.totalValue - a.totalValue),
     [positions],
   );
 

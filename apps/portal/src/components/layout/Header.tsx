@@ -29,7 +29,12 @@ export const Header: React.FC<HeaderProps> = ({ className = '' }) => {
       p => p.positionValue > 0 || p.storageFeeDeposit > 0 || p.pendingDeposit,
     );
     if (stakedPositions.length === 0) return null;
-    const sorted = [...stakedPositions].sort((a, b) => b.positionValue - a.positionValue);
+    // Sort by total value (staked + storage fund + pending) to match dashboard
+    const sorted = [...stakedPositions].sort((a, b) => {
+      const totalA = a.positionValue + a.storageFeeDeposit + (a.pendingDeposit?.amount || 0);
+      const totalB = b.positionValue + b.storageFeeDeposit + (b.pendingDeposit?.amount || 0);
+      return totalB - totalA;
+    });
     return sorted[0].operatorId;
   }, [positions]);
 
