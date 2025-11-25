@@ -9,12 +9,15 @@ export const useOperators = () => {
   const {
     operators,
     filteredOperators,
+    stakedOperators,
     loading,
     error,
     filters,
     isInitialized,
     fetchOperators,
     setFilters,
+    setUserPositions,
+    resetFilters,
     refreshOperatorData,
     clearError,
   } = useOperatorStore();
@@ -28,18 +31,21 @@ export const useOperators = () => {
 
   return {
     // State
-    operators: filteredOperators, // Return filtered operators by default
+    operators: filteredOperators, // Return filtered (non-staked) operators by default
+    stakedOperators, // User's staked operators (always shown on top)
     allOperators: operators, // Access to unfiltered data if needed
     loading,
     error,
     filters,
 
     // Computed values
-    operatorCount: filteredOperators.length,
+    operatorCount: filteredOperators.length + stakedOperators.length,
 
     // Actions
     refetch: fetchOperators,
     updateFilters: setFilters,
+    setUserPositions,
+    resetFilters,
     refreshOperator: refreshOperatorData,
     clearError,
   };
@@ -65,7 +71,7 @@ export const useOperator = (operatorId: string) => {
  * Hook for search and filtering functionality
  */
 export const useOperatorFilters = () => {
-  const { filters, setFilters } = useOperatorStore();
+  const { filters, setFilters, resetFilters: storeResetFilters } = useOperatorStore();
 
   const updateSearch = (query: string) => {
     setFilters({ searchQuery: query });
@@ -82,15 +88,12 @@ export const useOperatorFilters = () => {
     });
   };
 
-  const resetFilters = () => {
-    setFilters({
-      searchQuery: '',
-      domainFilter: 'all',
-      sortBy: 'totalStaked',
-      sortOrder: 'desc',
+  const toggleMyStakesOnly = () => {
+    setFilters({ myStakesOnly: !filters.myStakesOnly });
+  };
 
-      statusFilter: undefined,
-    });
+  const setMyStakesOnly = (value: boolean) => {
+    setFilters({ myStakesOnly: value });
   };
 
   return {
@@ -98,7 +101,9 @@ export const useOperatorFilters = () => {
     updateSearch,
     updateDomain,
     updateSort,
-    resetFilters,
+    toggleMyStakesOnly,
+    setMyStakesOnly,
+    resetFilters: storeResetFilters,
     setFilters,
   };
 };

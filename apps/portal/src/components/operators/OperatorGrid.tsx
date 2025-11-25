@@ -4,6 +4,7 @@ import type { Operator } from '@/types/operator';
 
 interface OperatorGridProps {
   operators: Operator[];
+  stakedOperators?: Operator[];
   loading?: boolean;
   onStake: (operatorId: string) => void;
   onWithdraw: (operatorId: string) => void;
@@ -11,6 +12,7 @@ interface OperatorGridProps {
 
 export const OperatorGrid: React.FC<OperatorGridProps> = ({
   operators,
+  stakedOperators = [],
   loading = false,
   onStake,
   onWithdraw,
@@ -50,7 +52,9 @@ export const OperatorGrid: React.FC<OperatorGridProps> = ({
     );
   }
 
-  if (operators.length === 0) {
+  const totalOperators = stakedOperators.length + operators.length;
+
+  if (totalOperators === 0) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
@@ -77,15 +81,47 @@ export const OperatorGrid: React.FC<OperatorGridProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {operators.map(operator => (
-        <OperatorCard
-          key={operator.id}
-          operator={operator}
-          onStake={onStake}
-          onWithdraw={onWithdraw}
-        />
-      ))}
+    <div className="space-y-6">
+      {/* Staked operators section */}
+      {stakedOperators.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {stakedOperators.map(operator => (
+              <OperatorCard
+                key={operator.id}
+                operator={operator}
+                onStake={onStake}
+                onWithdraw={onWithdraw}
+              />
+            ))}
+          </div>
+
+          {/* Section separator */}
+          {operators.length > 0 && (
+            <div className="flex items-center gap-3 py-2">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                Discover More Operators
+              </span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Non-staked operators section */}
+      {operators.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {operators.map(operator => (
+            <OperatorCard
+              key={operator.id}
+              operator={operator}
+              onStake={onStake}
+              onWithdraw={onWithdraw}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

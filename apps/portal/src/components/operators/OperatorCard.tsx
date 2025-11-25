@@ -43,7 +43,12 @@ export const OperatorCard: React.FC<OperatorCardProps> = ({ operator, onStake, o
       userPosition.pendingDeposit);
 
   return (
-    <Card className="hover:shadow-lg hover:border-primary-200 transition-all duration-200">
+    <Card
+      className={`
+        hover:shadow-lg transition-all duration-200
+        ${hasUserPosition ? 'border-primary/50 bg-primary/5 hover:border-primary' : 'hover:border-primary-200'}
+      `}
+    >
       <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -118,10 +123,10 @@ export const OperatorCard: React.FC<OperatorCardProps> = ({ operator, onStake, o
           </div>
         </div>
 
-        {/* Your Position (if any) */}
-        <div className="mb-4 p-3 bg-muted rounded-lg">
-          <div className="text-center">
-            {userPosition ? (
+        {/* Your Position (only shown if user has a position) */}
+        {hasUserPosition && userPosition && (
+          <div className="mb-4 p-3 bg-muted rounded-lg">
+            <div className="text-center">
               <Tooltip content={<PositionBreakdown position={userPosition} />} side="top">
                 <span className="text-sm font-medium text-foreground font-mono cursor-help whitespace-nowrap">
                   {formatAI3(
@@ -132,27 +137,32 @@ export const OperatorCard: React.FC<OperatorCardProps> = ({ operator, onStake, o
                   )}
                 </span>
               </Tooltip>
-            ) : (
-              <span className="text-sm font-medium text-foreground font-mono">0.00</span>
-            )}
-            <div className="text-xs text-muted-foreground">Your Total Position</div>
+              <div className="text-xs text-muted-foreground">Your Total Position</div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Actions */}
-        <div className="flex gap-3">
-          <Button className="flex-1" onClick={() => onStake(operator.id)}>
-            Stake
-          </Button>
-          <Button
-            variant="warningOutline"
-            className="flex-1"
-            onClick={() => onWithdraw(operator.id)}
-            disabled={!hasUserPosition}
-          >
-            Withdraw
-          </Button>
-        </div>
+        {hasUserPosition ? (
+          <div className="flex gap-3">
+            <Button className="flex-1" onClick={() => onStake(operator.id)}>
+              Stake
+            </Button>
+            <Button
+              variant="warningOutline"
+              className="flex-1"
+              onClick={() => onWithdraw(operator.id)}
+            >
+              Withdraw
+            </Button>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <Button className="w-1/2" onClick={() => onStake(operator.id)}>
+              Stake
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
