@@ -25,7 +25,7 @@ export const OperatorDetailPage: React.FC = () => {
     loading,
     error,
     page,
-    setPage,
+    goToPage,
     depositsCount,
     withdrawalsCount,
   } = useOperatorTransactions(operatorId, { pageSize: 25 });
@@ -201,7 +201,7 @@ export const OperatorDetailPage: React.FC = () => {
         <div className="flex items-center justify-between pt-3">
           <Button
             variant="secondary"
-            onClick={() => setPage(Math.max(0, page - 1))}
+            onClick={() => goToPage(Math.max(0, page - 1))}
             disabled={page === 0 || loading}
           >
             Previous
@@ -210,7 +210,7 @@ export const OperatorDetailPage: React.FC = () => {
             Page {page + 1}
           </Text>
           <Button
-            onClick={() => setPage(page + 1)}
+            onClick={() => goToPage(page + 1)}
             disabled={loading || (page + 1) * 25 >= depositsCount + withdrawalsCount}
           >
             Next

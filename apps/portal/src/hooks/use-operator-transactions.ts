@@ -32,7 +32,7 @@ interface UseOperatorTransactionsReturn {
   error: string | null;
   refetch: () => Promise<void>;
   page: number;
-  setPage: (p: number) => void;
+  goToPage: (p: number) => void;
 }
 
 export const useOperatorTransactions = (
@@ -55,123 +55,138 @@ export const useOperatorTransactions = (
   >([]);
   const [epochToSharePrice, setEpochToSharePrice] = useState<Record<number, string>>({});
 
-  const fetchData = useCallback(async () => {
-    if (!isConnected || !selectedAccount || !operatorId) return;
+  const fetchData = useCallback(
+    async (pageToFetch: number) => {
+      if (!isConnected || !selectedAccount || !operatorId) return;
 
-    setLoading(true);
-    setError(null);
-    try {
-      const [dep, wit] = await Promise.all([
-        indexerService.getDepositsByOperator({
-          address: selectedAccount.address,
-          operatorId,
-          limit: pageSize,
-          offset: page * pageSize,
-        }),
-        indexerService.getWithdrawalsByOperator({
-          address: selectedAccount.address,
-          operatorId,
-          limit: pageSize,
-          offset: page * pageSize,
-        }),
-      ]);
-
-      // Determine domain id (prefer deposits, fallback to withdrawals)
-      const domainIdStr = dep.rows[0]?.domain_id ?? wit.rows[0]?.domain_id;
-      const domainIdNum = domainIdStr ? Number(domainIdStr) : NaN;
-
-      // Resolve current domain epoch (RPC preferred, fallback to latest share price epoch)
-      let resolvedEpoch: number | null = null;
-      if (Number.isFinite(domainIdNum)) {
-        try {
-          resolvedEpoch = await getCurrentDomainEpochIndex(domainIdNum);
-        } catch {
-          // ignore, fallback below
-        }
-      }
-      if (resolvedEpoch === null) {
-        try {
-          const latest = await indexerService.getOperatorLatestSharePrices(operatorId, 1);
-          resolvedEpoch = latest[0]?.epoch_index ?? null;
-        } catch {
-          resolvedEpoch = null;
-        }
-      }
-
-      // Fetch share prices for withdrawal epochs to derive amounts from shares
-      let epochPriceMap: Record<number, string> = {};
+      setLoading(true);
+      setError(null);
       try {
-        const epochs = wit.rows
-          .map(r => Number(r.withdrawal_in_shares_domain_epoch || ''))
-          .filter(e => Number.isFinite(e));
-        const domainIdForPrices = domainIdStr;
-        if (epochs.length > 0 && domainIdForPrices) {
-          const priceRows = await indexerService.getOperatorSharePricesByEpochs(
+        const [dep, wit] = await Promise.all([
+          indexerService.getDepositsByOperator({
+            address: selectedAccount.address,
             operatorId,
-            domainIdForPrices,
-            epochs,
-          );
-          epochPriceMap = priceRows.reduce<Record<number, string>>((acc, row) => {
-            acc[row.epoch_index] = row.share_price;
-            return acc;
-          }, {});
+            limit: pageSize,
+            offset: pageToFetch * pageSize,
+          }),
+          indexerService.getWithdrawalsByOperator({
+            address: selectedAccount.address,
+            operatorId,
+            limit: pageSize,
+            offset: pageToFetch * pageSize,
+          }),
+        ]);
+
+        // Determine domain id (prefer deposits, fallback to withdrawals)
+        const domainIdStr = dep.rows[0]?.domain_id ?? wit.rows[0]?.domain_id;
+        const domainIdNum = domainIdStr ? Number(domainIdStr) : NaN;
+
+        // Resolve current domain epoch (RPC preferred, fallback to latest share price epoch)
+        let resolvedEpoch: number | null = null;
+        if (Number.isFinite(domainIdNum)) {
+          try {
+            resolvedEpoch = await getCurrentDomainEpochIndex(domainIdNum);
+          } catch {
+            // ignore, fallback below
+          }
         }
-      } catch {
-        epochPriceMap = {};
-      }
-
-      // Compute unlock statuses for withdrawals (use current domain block if available)
-      let unlockStatuses: Array<WithdrawalUnlockStatus | null> = [];
-      try {
-        if (Number.isFinite(domainIdNum) && wit.rows.length > 0) {
-          const currentBlock = await getCurrentDomainBlockNumber(Number(domainIdNum));
-          unlockStatuses = await Promise.all(
-            wit.rows.map(async row => {
-              const unlockBlock = Number(row.withdrawal_in_shares_unlock_block || '0');
-              if (!Number.isFinite(unlockBlock) || unlockBlock <= 0) return null;
-              try {
-                return await checkWithdrawalUnlockStatus(unlockBlock, currentBlock);
-              } catch {
-                return null;
-              }
-            }),
-          );
+        if (resolvedEpoch === null) {
+          try {
+            const latest = await indexerService.getOperatorLatestSharePrices(operatorId, 1);
+            resolvedEpoch = latest[0]?.epoch_index ?? null;
+          } catch {
+            resolvedEpoch = null;
+          }
         }
-      } catch {
-        unlockStatuses = [];
+
+        // Fetch share prices for withdrawal epochs to derive amounts from shares
+        let epochPriceMap: Record<number, string> = {};
+        try {
+          const epochs = wit.rows
+            .map(r => Number(r.withdrawal_in_shares_domain_epoch || ''))
+            .filter(e => Number.isFinite(e));
+          const domainIdForPrices = domainIdStr;
+          if (epochs.length > 0 && domainIdForPrices) {
+            const priceRows = await indexerService.getOperatorSharePricesByEpochs(
+              operatorId,
+              domainIdForPrices,
+              epochs,
+            );
+            epochPriceMap = priceRows.reduce<Record<number, string>>((acc, row) => {
+              acc[row.epoch_index] = row.share_price;
+              return acc;
+            }, {});
+          }
+        } catch {
+          epochPriceMap = {};
+        }
+
+        // Compute unlock statuses for withdrawals (use current domain block if available)
+        let unlockStatuses: Array<WithdrawalUnlockStatus | null> = [];
+        try {
+          if (Number.isFinite(domainIdNum) && wit.rows.length > 0) {
+            const currentBlock = await getCurrentDomainBlockNumber(Number(domainIdNum));
+            unlockStatuses = await Promise.all(
+              wit.rows.map(async row => {
+                const unlockBlock = Number(row.withdrawal_in_shares_unlock_block || '0');
+                if (!Number.isFinite(unlockBlock) || unlockBlock <= 0) return null;
+                try {
+                  return await checkWithdrawalUnlockStatus(unlockBlock, currentBlock);
+                } catch {
+                  return null;
+                }
+              }),
+            );
+          }
+        } catch {
+          unlockStatuses = [];
+        }
+
+        setCurrentDomainEpoch(resolvedEpoch);
+        setEpochToSharePrice(epochPriceMap);
+        setWithdrawalUnlockStatuses(unlockStatuses);
+
+        setDeposits(dep.rows);
+        setWithdrawals(wit.rows);
+        setDepositsCount(dep.totalCount);
+        setWithdrawalsCount(wit.totalCount);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to load transactions';
+        setError(msg);
+
+        console.error('useOperatorTransactions error:', err);
+      } finally {
+        setLoading(false);
       }
+    },
+    [isConnected, selectedAccount, operatorId, pageSize],
+  );
 
-      setCurrentDomainEpoch(resolvedEpoch);
-      setEpochToSharePrice(epochPriceMap);
-      setWithdrawalUnlockStatuses(unlockStatuses);
+  const goToPage = useCallback(
+    (newPage: number) => {
+      setPage(newPage);
+      fetchData(newPage);
+    },
+    [fetchData],
+  );
 
-      setDeposits(dep.rows);
-      setWithdrawals(wit.rows);
-      setDepositsCount(dep.totalCount);
-      setWithdrawalsCount(wit.totalCount);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to load transactions';
-      setError(msg);
-
-      console.error('useOperatorTransactions error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [isConnected, selectedAccount, operatorId, page, pageSize]);
-
+  // Reset and fetch page 0 when operator or account changes
   useEffect(() => {
     setPage(0);
-  }, [operatorId, selectedAccount?.address]);
+    setDeposits([]);
+    setWithdrawals([]);
+    setDepositsCount(0);
+    setWithdrawalsCount(0);
+    setError(null);
+    fetchData(0);
+  }, [operatorId, selectedAccount?.address, fetchData]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
+  // Refresh interval - refetch current page periodically
   useEffect(() => {
     if (!refreshInterval || refreshInterval <= 0) return;
-    const id = setInterval(fetchData, refreshInterval);
+    const id = setInterval(() => fetchData(page), refreshInterval);
     return () => clearInterval(id);
-  }, [fetchData, refreshInterval]);
+  }, [fetchData, page, refreshInterval]);
 
   const transactions = useMemo<OperatorTransaction[]>(() => {
     const depTxs = deposits.map(row => {
@@ -242,8 +257,8 @@ export const useOperatorTransactions = (
     totalCount: depositsCount + withdrawalsCount,
     loading,
     error,
-    refetch: fetchData,
+    refetch: () => fetchData(page),
     page,
-    setPage,
+    goToPage,
   };
 };
