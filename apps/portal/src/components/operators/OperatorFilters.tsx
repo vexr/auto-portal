@@ -3,6 +3,8 @@ import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useOperatorFilters } from '@/hooks/use-operators';
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 interface OperatorFiltersProps {
   loading?: boolean;
 }
@@ -22,7 +24,7 @@ export const OperatorFilters: React.FC<OperatorFiltersProps> = ({ loading = fals
       if (localSearch !== filters.searchQuery) {
         updateSearch(localSearch);
       }
-    }, 300);
+    }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
   }, [localSearch, filters.searchQuery, updateSearch]);
