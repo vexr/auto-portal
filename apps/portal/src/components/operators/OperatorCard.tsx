@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatAI3, formatNumber, formatPercentage, getAPYColor } from '@/lib/formatting';
-import { usePositions } from '@/hooks/use-positions';
+import { useStoredPositions } from '@/hooks/use-operators';
 import { Tooltip } from '@/components/ui/tooltip';
 import { ApyTooltip } from '@/components/operators/ApyTooltip';
 import { OperatorPoolBreakdown } from '@/components/operators/OperatorPoolBreakdown';
@@ -17,7 +17,7 @@ interface OperatorCardProps {
 }
 
 export const OperatorCard: React.FC<OperatorCardProps> = ({ operator, onStake, onWithdraw }) => {
-  const { positions } = usePositions({ refreshInterval: 0 });
+  const { positions } = useStoredPositions();
   const userPosition = positions.find(p => p.operatorId === operator.id);
   const getStatusVariant = (status: Operator['status']) => {
     switch (status) {

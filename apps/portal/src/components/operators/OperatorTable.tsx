@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { formatPercentage, getAPYColor, formatNumber } from '@/lib/formatting';
 import type { Operator, SortField } from '@/types/operator';
-import { usePositions } from '@/hooks/use-positions';
-import { useOperatorFilters } from '@/hooks/use-operators';
+import type { UserPosition } from '@/types/position';
+import { useOperatorFilters, useStoredPositions } from '@/hooks/use-operators';
 import { Tooltip } from '@/components/ui/tooltip';
 import { ApyTooltip } from '@/components/operators/ApyTooltip';
 import { OperatorPoolBreakdown } from '@/components/operators/OperatorPoolBreakdown';
@@ -125,11 +125,11 @@ export const OperatorTable: React.FC<OperatorTableProps> = ({
   onStake,
   onWithdraw,
 }) => {
-  const { positions } = usePositions({ refreshInterval: 0 });
+  const { positions } = useStoredPositions();
   const { filters, updateSort } = useOperatorFilters();
 
   const positionByOperatorId = React.useMemo(() => {
-    const map = new Map<string, ReturnType<typeof usePositions>['positions'][number]>();
+    const map = new Map<string, UserPosition>();
     for (const p of positions) {
       map.set(p.operatorId, p);
     }

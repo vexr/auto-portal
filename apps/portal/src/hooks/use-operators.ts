@@ -105,3 +105,9 @@ export const useOperatorFilters = () => {
     setFilters,
   };
 };
+
+/** Hook to read positions from the operator store (no fetching). */
+export const useStoredPositions = () => {
+  const userPositions = useOperatorStore(state => state.userPositions);
+  return { positions: userPositions };
+};
