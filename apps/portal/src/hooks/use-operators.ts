@@ -2,9 +2,7 @@ import { useEffect } from 'react';
 import { useOperatorStore } from '@/stores/operator-store';
 import type { FilterState } from '@/types/operator';
 
-/**
- * Hook for operator data access and management
- */
+/** Hook for operator data access and management. */
 export const useOperators = () => {
   const {
     operators,
@@ -31,9 +29,9 @@ export const useOperators = () => {
 
   return {
     // State
-    operators: filteredOperators, // Return filtered (non-staked) operators by default
-    stakedOperators, // User's staked operators (always shown on top)
-    allOperators: operators, // Access to unfiltered data if needed
+    filteredOperators,
+    stakedOperators,
+    allOperators: operators,
     loading,
     error,
     filters,

@@ -11,8 +11,15 @@ import { formatAI3 } from '@/lib/formatting';
 export const OperatorsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { operators, stakedOperators, loading, error, clearError, allOperators, setUserPositions } =
-    useOperators();
+  const {
+    filteredOperators,
+    stakedOperators,
+    loading,
+    error,
+    clearError,
+    allOperators,
+    setUserPositions,
+  } = useOperators();
   const { positions } = usePositions({ refreshInterval: 0 });
 
   // Sync positions to the operator store for filtering/sorting
@@ -125,7 +132,7 @@ export const OperatorsPage: React.FC = () => {
       {/* Operator Display */}
       {viewMode === 'grid' ? (
         <OperatorGrid
-          operators={operators}
+          operators={filteredOperators}
           stakedOperators={stakedOperators}
           loading={loading}
           onStake={handleStake}
@@ -133,7 +140,7 @@ export const OperatorsPage: React.FC = () => {
         />
       ) : (
         <OperatorTable
-          operators={operators}
+          operators={filteredOperators}
           stakedOperators={stakedOperators}
           loading={loading}
           onStake={handleStake}
@@ -143,8 +150,8 @@ export const OperatorsPage: React.FC = () => {
 
       {/* Load More (placeholder for future pagination) */}
       {!loading &&
-        operators.length + stakedOperators.length > 0 &&
-        operators.length + stakedOperators.length >= 10 && (
+        filteredOperators.length + stakedOperators.length > 0 &&
+        filteredOperators.length + stakedOperators.length >= 10 && (
           <div className="mt-8 text-center">
             <Button variant="outline">
               Load More Operators
