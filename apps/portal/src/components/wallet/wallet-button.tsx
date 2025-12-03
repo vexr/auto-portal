@@ -35,42 +35,42 @@ const AccountDropdown: React.FC<AccountDropdownProps> = ({
   };
 
   return (
-    <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+    <div className="absolute right-0 top-full mt-1 w-64 bg-popover border border-border rounded-md shadow-lg z-50">
       <div className="p-2">
-        <div className="text-xs text-gray-500 mb-2">Select Account</div>
+        <div className="text-xs text-muted-foreground mb-2">Select Account</div>
         {accounts.map((account: WalletAccount) => (
           <button
             key={account.address}
             onClick={() => onSelectAccount(account.address)}
             className={`w-full text-left px-2 py-1 rounded text-sm ${
               account.address === selectedAccount?.address
-                ? 'bg-blue-50 text-blue-600'
-                : 'hover:bg-gray-50'
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-muted'
             }`}
           >
             <div className="flex items-center justify-between">
               <span className="font-medium">{account.name || shortenAddress(account.address)}</span>
               <button
                 onClick={e => handleCopy(e, account.address)}
-                className="p-1 hover:bg-gray-200 rounded transition-colors"
+                className="p-1 hover:bg-muted rounded transition-colors"
                 title="Copy address"
               >
                 {copiedAddress === account.address ? (
                   <Check className="w-3 h-3 text-success-600" />
                 ) : (
-                  <Copy className="w-3 h-3 text-gray-500" />
+                  <Copy className="w-3 h-3 text-muted-foreground" />
                 )}
               </button>
             </div>
-            <div className="text-xs text-gray-500 mt-1" title={account.address}>
+            <div className="text-xs text-muted-foreground mt-1" title={account.address}>
               {shortenAddress(account.address, 8)}
             </div>
           </button>
         ))}
-        <div className="border-t mt-2 pt-2">
+        <div className="border-t border-border mt-2 pt-2">
           <button
             onClick={onDisconnect}
-            className="w-full text-left px-2 py-1 rounded text-sm text-error-600 hover:bg-error-50"
+            className="w-full text-left px-2 py-1 rounded text-sm text-error-600 hover:bg-error-50 dark:hover:bg-error-950"
           >
             Disconnect
           </button>

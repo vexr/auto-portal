@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatAI3, formatNumber, formatPercentage, getAPYColor } from '@/lib/formatting';
-import { usePositions } from '@/hooks/use-positions';
+import { useStoredPositions } from '@/hooks/use-operators';
 import { Tooltip } from '@/components/ui/tooltip';
 import { ApyTooltip } from '@/components/operators/ApyTooltip';
 import { OperatorPoolBreakdown } from '@/components/operators/OperatorPoolBreakdown';
@@ -17,7 +17,7 @@ interface OperatorCardProps {
 }
 
 export const OperatorCard: React.FC<OperatorCardProps> = ({ operator, onStake, onWithdraw }) => {
-  const { positions } = usePositions({ refreshInterval: 0 });
+  const { positions } = useStoredPositions();
   const userPosition = positions.find(p => p.operatorId === operator.id);
   const getStatusVariant = (status: Operator['status']) => {
     switch (status) {
@@ -40,10 +40,15 @@ export const OperatorCard: React.FC<OperatorCardProps> = ({ operator, onStake, o
     !!userPosition &&
     (userPosition.positionValue > 0 ||
       userPosition.storageFeeDeposit > 0 ||
-      userPosition.pendingDeposit);
+      (userPosition.pendingDeposit?.amount || 0) > 0);
 
   return (
-    <Card className="hover:shadow-lg hover:border-primary-200 transition-all duration-200">
+    <Card
+      className={`
+        hover:shadow-lg transition-all duration-200
+        ${hasUserPosition ? 'border-primary/50 bg-primary/5 hover:border-primary' : 'hover:border-primary-200'}
+      `}
+    >
       <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -118,10 +123,10 @@ export const OperatorCard: React.FC<OperatorCardProps> = ({ operator, onStake, o
           </div>
         </div>
 
-        {/* Your Position (if any) */}
-        <div className="mb-4 p-3 bg-muted rounded-lg">
-          <div className="text-center">
-            {userPosition ? (
+        {/* Your Position (only shown if user has a position) */}
+        {hasUserPosition && userPosition && (
+          <div className="mb-4 p-3 bg-muted rounded-lg">
+            <div className="text-center">
               <Tooltip content={<PositionBreakdown position={userPosition} />} side="top">
                 <span className="text-sm font-medium text-foreground font-mono cursor-help whitespace-nowrap">
                   {formatAI3(
@@ -132,27 +137,32 @@ export const OperatorCard: React.FC<OperatorCardProps> = ({ operator, onStake, o
                   )}
                 </span>
               </Tooltip>
-            ) : (
-              <span className="text-sm font-medium text-foreground font-mono">0.00</span>
-            )}
-            <div className="text-xs text-muted-foreground">Your Total Position</div>
+              <div className="text-xs text-muted-foreground">Your Total Position</div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Actions */}
-        <div className="flex gap-3">
-          <Button className="flex-1" onClick={() => onStake(operator.id)}>
-            Stake
-          </Button>
-          <Button
-            variant="warningOutline"
-            className="flex-1"
-            onClick={() => onWithdraw(operator.id)}
-            disabled={!hasUserPosition}
-          >
-            Withdraw
-          </Button>
-        </div>
+        {hasUserPosition ? (
+          <div className="flex gap-3">
+            <Button className="flex-1" onClick={() => onStake(operator.id)}>
+              Stake
+            </Button>
+            <Button
+              variant="warningOutline"
+              className="flex-1"
+              onClick={() => onWithdraw(operator.id)}
+            >
+              Withdraw
+            </Button>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <Button className="w-1/2" onClick={() => onStake(operator.id)}>
+              Stake
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

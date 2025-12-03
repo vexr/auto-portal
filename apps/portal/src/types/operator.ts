@@ -1,4 +1,5 @@
 import type { ReturnDetails } from '@/lib/apy';
+import type { UserPosition } from '@/types/position';
 
 export interface Operator {
   id: string;
@@ -29,12 +30,21 @@ export interface OperatorStats {
   totalStaked: string;
 }
 
+export type SortField =
+  | 'name'
+  | 'totalStaked'
+  | 'nominatorCount'
+  | 'tax'
+  | 'apy'
+  | 'status'
+  | 'yourPosition';
+
 export type FilterState = {
   searchQuery: string;
   domainFilter: string;
-  sortBy: 'totalStaked' | 'tax' | 'id' | 'minimumStake';
+  sortBy: SortField;
   sortOrder: 'asc' | 'desc';
-
+  myStakesOnly: boolean;
   statusFilter?: Operator['status'][];
 };
 
@@ -49,9 +59,11 @@ export interface OperatorStore {
   // State
   operators: Operator[];
   filteredOperators: Operator[];
+  stakedOperators: Operator[];
   loading: boolean;
   error: string | null;
   isInitialized: boolean;
+  userPositions: UserPosition[];
 
   // Filters
   filters: FilterState;
@@ -59,6 +71,8 @@ export interface OperatorStore {
   // Actions
   fetchOperators: () => Promise<void>;
   setFilters: (filters: Partial<FilterState>) => void;
+  setUserPositions: (positions: UserPosition[]) => void;
+  resetFilters: () => void;
   applyFilters: () => void;
   refreshOperatorData: (operatorId: string) => Promise<void>;
   clearError: () => void;

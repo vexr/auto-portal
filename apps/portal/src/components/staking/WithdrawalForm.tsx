@@ -27,7 +27,7 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
 }) => {
   const [withdrawalMethod, setWithdrawalMethod] = useState<WithdrawalMethod>('partial');
   const [amount, setAmount] = useState<string>('');
-  const { operators } = useOperators();
+  const { allOperators } = useOperators();
   const { selectedAccount, isConnected } = useWallet();
 
   const {
@@ -41,7 +41,7 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
   } = useWithdrawalTransaction();
 
   // Find the operator data for validation
-  const operator = operators.find(op => op.id === position.operatorId);
+  const operator = allOperators.find(op => op.id === position.operatorId);
 
   // Parse amount as number when needed
   const amountNumber = parseFloat(amount) || 0;

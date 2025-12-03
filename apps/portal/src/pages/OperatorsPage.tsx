@@ -1,16 +1,31 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { OperatorFilters, OperatorGrid, OperatorTable } from '@/components/operators';
 import { useOperators } from '@/hooks/use-operators';
+import { usePositions } from '@/hooks/use-positions';
 import { formatAI3 } from '@/lib/formatting';
 
 export const OperatorsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { operators, loading, error, clearError, allOperators } = useOperators();
+  const {
+    filteredOperators,
+    stakedOperators,
+    loading,
+    error,
+    clearError,
+    allOperators,
+    setUserPositions,
+  } = useOperators();
+  const { positions } = usePositions({ refreshInterval: 0 });
+
+  // Sync positions to the operator store for filtering/sorting
+  useEffect(() => {
+    setUserPositions(positions);
+  }, [positions, setUserPositions]);
 
   // Derive view mode from URL params with proper validation, default to grid
   const getValidatedViewMode = (): 'grid' | 'table' => {
@@ -85,9 +100,9 @@ export const OperatorsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filters & Search */}
+      {/* Filters & View Toggle */}
       <div className="mb-8">
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-end justify-between mb-4">
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
           <OperatorFilters loading={loading} />
 
           {/* View Toggle (Desktop Only) */}
@@ -117,14 +132,16 @@ export const OperatorsPage: React.FC = () => {
       {/* Operator Display */}
       {viewMode === 'grid' ? (
         <OperatorGrid
-          operators={operators}
+          operators={filteredOperators}
+          stakedOperators={stakedOperators}
           loading={loading}
           onStake={handleStake}
           onWithdraw={handleWithdraw}
         />
       ) : (
         <OperatorTable
-          operators={operators}
+          operators={filteredOperators}
+          stakedOperators={stakedOperators}
           loading={loading}
           onStake={handleStake}
           onWithdraw={handleWithdraw}
@@ -132,21 +149,23 @@ export const OperatorsPage: React.FC = () => {
       )}
 
       {/* Load More (placeholder for future pagination) */}
-      {!loading && operators.length > 0 && operators.length >= 10 && (
-        <div className="mt-8 text-center">
-          <Button variant="outline">
-            Load More Operators
-            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </Button>
-        </div>
-      )}
+      {!loading &&
+        filteredOperators.length + stakedOperators.length > 0 &&
+        filteredOperators.length + stakedOperators.length >= 10 && (
+          <div className="mt-8 text-center">
+            <Button variant="outline">
+              Load More Operators
+              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </Button>
+          </div>
+        )}
     </div>
   );
 };
